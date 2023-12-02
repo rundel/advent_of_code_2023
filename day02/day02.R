@@ -45,8 +45,6 @@ map_lgl(
   
 
 
-str_match_all(d, "(?: (\\d) blue,?)?(?: (\\d) green,?)?(?: (\\d) red,?)?;")
-
 ## Part 2
 
 d = read_lines(here::here("day02/input.txt"))
