@@ -16,9 +16,6 @@ z = d |>
           function(y) {
             z = str_split(y, " ")
             
-            print(map_chr(z, 1) |> as.numeric())
-            print(map_chr(z, 2))
-            
             z = setNames(map_chr(z, 1) |> as.numeric(), map_chr(z, 2) )
             if (is.na(z["blue"]))  z["blue"]  = 0
             if (is.na(z["green"])) z["green"] = 0
@@ -59,10 +56,6 @@ z = d |>
         map(
           function(y) {
             z = str_split(y, " ")
-            
-            print(map_chr(z, 1) |> as.numeric())
-            print(map_chr(z, 2))
-            
             z = setNames(map_chr(z, 1) |> as.numeric(), map_chr(z, 2) )
             if (is.na(z["blue"]))  z["blue"]  = 0
             if (is.na(z["green"])) z["green"] = 0
