@@ -99,12 +99,15 @@ rle_code = function(x, char = "#") {
 }
 
 count = function(seq, code) {
+  #cat(paste(seq, collapse = ""), code, "\n")
   if (sum(seq == "?") == 0) {
     check = identical(rle_code(seq), code)
     #if (check)
     #  cat(paste(seq,collapse=""), "\n")
     return(check)
   }
+  
+  if (sum(seq == "?") + sum(seq == "#") < sum(code)) return(0)
   
   i = which(seq == "?")[1]
   
@@ -120,20 +123,39 @@ count = function(seq, code) {
     }
   }
   
+  if (i > 1) {
+    if (seq[i-1] == "#") {
+      
+      if (cur_rle[n] == code_sub[n]) {
+        return( count(replace(seq, i, "."), code) )
+      } else {
+        idx = (i-1):((i-1) + code_sub[n]-1)
+        end = (i-1) + code_sub[n]
+        if (! all(seq[idx] %in% c("#","?")) | ! (seq[end] %in% c("?", ".") | end > length(seq)))
+          return(0)
+        else {
+          new_seq = replace(seq, idx, "#") |>
+            replace(end, ".")
+          return( count(new_seq, code) )
+        }
+      }
+    }
+  }
+  
   return( 
     count(replace(seq, i, "#"), code) +
       count(replace(seq, i, "."), code)
   )
+  
 }
 
-count2 = memoise::memoise(count)
-
+count2 = memoise::memoise(count, cache = cachem::cache_mem(max_size = 4*1024 * 1024^2))
 
 #cli::cli_progress_bar(total = nrow(z))
 
 (z2 = z |>
     mutate(
-      map_dbl(
+      res = map_dbl(
         row_number(),
         function(i) {
           cat(i, "\n")
