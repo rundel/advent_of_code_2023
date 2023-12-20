@@ -235,4 +235,12 @@ find_cycle = function(stop_node, stop_signal) {
   n
 }
 
-find_cycle("tr", 1)
+res = c(
+  find_cycle("tr", 1),
+  find_cycle("xm", 1),
+  find_cycle("dr", 1),
+  find_cycle("nh", 1)
+)
+
+options(digits=22)
+reduce(res, pracma::Lcm) 
