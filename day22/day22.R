@@ -137,14 +137,13 @@ above = map(
   .progress=TRUE
 )
 
-(res = map_dbl(
+res = map_dbl(
   unique(state$id),
   function(i) {
     queue = c(above[[i]])
     remove = c(i)
     n = 0
     while(length(queue) != 0) {
-      print(queue)
       j = queue[1]
       queue = queue[-1]
       
@@ -158,6 +157,6 @@ above = map(
     n
   },
   .progress = TRUE
-))
+)
 
 sum(res)
