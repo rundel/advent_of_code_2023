@@ -3,33 +3,29 @@ library(tidyverse)
 ## Part 1
 
 d = read_lines(here::here("day22/test.txt"))
-#d = read_lines(here::here("day22/input.txt"))
+d = read_lines(here::here("day22/input.txt"))
 
 state = d |> 
   str_split("~") |>
   map(~ str_split(.x, pattern=",") |> map(as.numeric) |> set_names(c("start","end"))) |>
   do.call(rbind, args = _) |>
   as_tibble() |>
+  mutate(
+    min_z = map2_dbl(start,end, ~ min(.x[3],.y[3]))
+  ) |>
+  arrange(min_z) |>
   transmute(
     id = row_number(),
     block = map2(start,end, ~ expand_grid(x = .x[1]:.y[1], y = .x[2]:.y[2], z=.x[3]:.y[3]))
   ) |> 
-  unnest(block) 
-  #mutate(
-  #  min_z = min(z),
-  #  .by = id
-  #) |>
-  #arrange(min_z, id) |>
-  #mutate(
-  #  id = cur_group_id(),
-  #  .by = id
-  #) |>
-  #select(-min_z)
+  unnest(block)
 
 prev_state = tibble(id=integer(), x=integer(), y=integer(), z=integer())
 
 move = function(state) {
-  for (i in unique(state$id)) {
+  ids = unique(state$id)
+  cli::cli_progress_bar(total = length(ids))
+  for (i in ids) {
     repeat {
       cur = state |> filter(id == i) |>
         mutate(z = z-1)
@@ -46,6 +42,7 @@ move = function(state) {
         break
       }
     }
+    cli::cli_progress_update()
   }
   
   return(arrange(state, id))
@@ -64,7 +61,7 @@ repeat {
   cat(n, "\n")
 }
 
-res = map(
+below = map(
   unique(state$id),
   function(i) {
     cur = state |> filter(id == i) |>
@@ -72,18 +69,95 @@ res = map(
   
     other = state |> filter(id != i)
     
-    semi_join(other, cur, by=c("x","y","z"))$id
+    semi_join(other, cur, by=c("x","y","z"))$id |>
+      unique()
   }, 
   .progress=TRUE
 )
 
-# If we are sitting on only one block can't disintegrate it
-length(unique(state$id)) - ( unlist(res[map(res, length) == 1]) |> unique() |> length() )
+above = map(
+  unique(state$id),
+  function(i) {
+    cur = state |> filter(id == i) |>
+      mutate(z = z+1)
+    
+    other = state |> filter(id != i)
+    
+    semi_join(other, cur, by=c("x","y","z"))$id |>
+      unique()
+  }, 
+  .progress=TRUE
+)
 
+map_lgl(
+  above,
+  function(x) {
+    
+    if (length(x) == 0) {
+      TRUE
+    } else {
+      map_lgl(
+        x, function(y) {
+          length(below[[y]]) > 1
+        }
+      ) |>
+        all()
+    }
+  }
+) |> sum()
 
 
 ## Part 2
 
-d = read_lines(here::here("day22/test.txt"))
-d = read_lines(here::here("day22/input.txt"))
+below = map(
+  unique(state$id),
+  function(i) {
+    cur = state |> filter(id == i) |>
+      mutate(z = z-1)
+    
+    other = state |> filter(id != i)
+    
+    semi_join(other, cur, by=c("x","y","z"))$id |>
+      unique()
+  }, 
+  .progress=TRUE
+)
 
+above = map(
+  unique(state$id),
+  function(i) {
+    cur = state |> filter(id == i) |>
+      mutate(z = z+1)
+    
+    other = state |> filter(id != i)
+    
+    semi_join(other, cur, by=c("x","y","z"))$id |>
+      unique()
+  }, 
+  .progress=TRUE
+)
+
+(res = map_dbl(
+  unique(state$id),
+  function(i) {
+    queue = c(above[[i]])
+    remove = c(i)
+    n = 0
+    while(length(queue) != 0) {
+      print(queue)
+      j = queue[1]
+      queue = queue[-1]
+      
+      if ( length(setdiff(below[[j]], remove)) == 0 ) {
+        remove = c(remove, j)
+        queue = setdiff( c(queue, above[[j]]), remove )
+        n = n+1
+      }
+    }
+    
+    n
+  },
+  .progress = TRUE
+))
+
+sum(res)
