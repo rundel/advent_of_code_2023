@@ -128,7 +128,7 @@ end = glue::glue(('{nrow(m)},{which(m[nrow(m),] == ".")}'))
 g = igraph::graph_from_data_frame(edges, directed = FALSE)
 p = igraph::all_simple_paths(g, start, end) 
 
-future::plan(future::multisession(workers = 8))
+future::plan(future::multisession, workers=8)
 
 res = furrr::future_map_dbl(
   p,
