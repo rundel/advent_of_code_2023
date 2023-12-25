@@ -19,3 +19,22 @@ id = igraph::tkplot(g)
 z = igraph::tk_coords(id)
 
 sum(z[,1] < 100) * sum(z[,1] > 100)
+
+
+## Alternative approach
+
+res = map(
+  1:1000, 
+  function(x) {
+    i = sample(seq_len(igraph::vcount(g)), 1)
+    j = sample(seq_len(igraph::vcount(g)), 1)
+    igraph::shortest_paths(g, to=i, from=j,output = "epath")$epath[[1]]
+  },
+  .progress = TRUE
+)
+
+cut = unlist(res) |> table() |> sort() |> tail(3) |> names() |> as.integer()
+
+igraph::delete_edges(g, cut) |>
+  igraph::clusters() |>
+  (\(x) prod(x$csize))()
